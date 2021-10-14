@@ -66,8 +66,6 @@ func reader(conn *websocket.Conn) {
 		webcam.Close()
 		img.Close()
 
-		break
-
 	}
 }
 
