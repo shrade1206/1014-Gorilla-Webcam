@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -24,7 +25,13 @@ func main() {
 }
 
 func homepage(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Home Page")
+	d, err := os.ReadFile("index.html")
+	if err != nil {
+		panic(err)
+	}
+
+	w.Header().Set("Content-Type", http.DetectContentType(d))
+	w.Write(d)
 }
 
 func reader(conn *websocket.Conn) {
@@ -65,7 +72,7 @@ func reader(conn *websocket.Conn) {
 }
 
 func wsEndpoint(w http.ResponseWriter, r *http.Request) {
-	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
+	// upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -76,16 +83,8 @@ func wsEndpoint(w http.ResponseWriter, r *http.Request) {
 	reader(ws)
 }
 
-// func client(conn *websocket.Conn) {
-// 	err := conn.WriteMessage(websocket.TextMessage, []byte("Welcome Tese"))
-// 	if err != nil {
-// 		log.Println(err)
-// 		return
-// 	}
-// }
-
 func setRoutes() {
-	http.HandleFunc("/", homepage)
-	http.HandleFunc("/ws", wsEndpoint)
+	http.Handle("/", http.FileServer(http.Dir("./public")))
 
+	http.HandleFunc("/ws", wsEndpoint)
 }
